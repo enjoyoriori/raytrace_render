@@ -1,0 +1,22 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "name": "raytrace",
+    "version-string": "1.0.0",
+    "dependencies": [
+        "stb",
+        "glfw3",
+        "glm",
+        "tinyobjloader",
+        {
+            "name": "imgui",
+            "features": [
+              "glfw-binding",
+              "vulkan-binding",
+              "docking-experimental"
+            ]
+        },
+        "imguizmo",
+        "tinygltf",
+        "miniaudio"
+    ]
+}
