@@ -5,10 +5,8 @@
 #include <filesystem>
 #include <string>
 #include <sstream>
-#include <cstring>
 #include <chrono>
 #include <thread>
-#include <stdexcept>
 
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>

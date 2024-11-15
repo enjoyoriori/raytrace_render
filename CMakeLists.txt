@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(glfw3 REQUIRED)
 
-file(GLOB_RECURSE PROJECT_SOURCES "code/*.cpp")
-file(GLOB_RECURSE PROJECT_HEADERS "code/*.hpp")
+file(GLOB_RECURSE PROJECT_SOURCES "code/*.cpp" "code/*.hpp")
+
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS})
 
 # Lib
