@@ -1,7 +1,9 @@
-#include <vulkan/vulkan.hpp>
-#include <iostream>
+#include "app.hpp"
 
-int main(){
-    std::cout << "Hello, World!" << std::endl;
+int main() {
+
+    Application app;
+    app.run();
     return 0;
+
 }
