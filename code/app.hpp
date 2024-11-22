@@ -1,11 +1,15 @@
+#pragma once
 #include "header.hpp"
-#ifndef APP_HPP
-#define APP_HPP
 
 class Application {
 
     public:
-        void run();
+        void run() {
+            initWindow();
+            initVulkan();
+            mainLoop();
+            cleanup();
+        }
 
     private:
         const uint32_t WIDTH = 1920;
@@ -13,14 +17,14 @@ class Application {
 
         GLFWwindow* window;
 
-        vk::Instance instance;
+        vk::UniqueInstance instance;
         vk::PhysicalDevice physicalDevice;
 
         void initWindow();
         void initVulkan();
         void mainLoop();
         void cleanup();
-        
-};
 
-#endif
+        //vulkan初期化用関数
+        vk::PhysicalDevice pickPhysicalDevice(const std::vector<vk::PhysicalDevice>& physicalDevices, const std::vector<vk::PhysicalDeviceType>& deviceTypes);
+};

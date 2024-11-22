@@ -1,11 +1,6 @@
 #include "app.hpp"
 
-void Application::run() {
-    initWindow();
-    initVulkan();
-    mainLoop();
-    cleanup();
-}
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 void Application::initWindow() {
     glfwInit();
@@ -15,6 +10,23 @@ void Application::initWindow() {
 }
 
 void Application::initVulkan() {
+    // インスタンスの初期化
+    auto requiredLayers = { "VK_LAYER_KHRONOS_validation" };
+    uint32_t instanceExtensionCount = 0;
+    const char** requiredExtensions = glfwGetRequiredInstanceExtensions(&instanceExtensionCount);
+    
+    vk::InstanceCreateInfo instCreateInfo(
+        {},
+        nullptr,
+        requiredLayers.size(),
+        requiredLayers.begin() ,
+        instanceExtensionCount,
+        requiredExtensions
+    );
+    instance = vk::createInstanceUnique(instCreateInfo);
+
+    // 物理デバイスの初期化
+    std::vector<vk::PhysicalDevice> physicalDevices = instance->enumeratePhysicalDevices();
 
 }
 
