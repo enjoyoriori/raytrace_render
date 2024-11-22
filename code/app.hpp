@@ -26,5 +26,7 @@ class Application {
         void cleanup();
 
         //vulkan初期化用関数
-        vk::PhysicalDevice pickPhysicalDevice(const std::vector<vk::PhysicalDevice>& physicalDevices, const std::vector<vk::PhysicalDeviceType>& deviceTypes);
+        vk::PhysicalDevice pickPhysicalDevice(const std::vector<const char*>& deviceExtensions);
+        bool checkDeviceExtensionSupport(vk::PhysicalDevice device, const std::vector<const char*>& deviceExtensions);
+        bool checkDeviceFeatures(vk::PhysicalDevice device);
 };
