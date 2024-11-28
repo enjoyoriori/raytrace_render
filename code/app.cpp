@@ -26,23 +26,21 @@ void Application::initVulkan() {
     instance = vk::createInstanceUnique(instCreateInfo);
 
     // 物理デバイスの初期化
-    auto deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-    vk::PhysicalDeviceFeatures deviceFeatures;
+    auto deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };    //拡張機能のリスト
+
+    vk::PhysicalDeviceFeatures deviceFeatures = {}; // DeviceFeaturesの設定
     deviceFeatures.geometryShader = VK_TRUE;
 
+    // 物理デバイスの選択
     physicalDevice = pickPhysicalDevice(deviceExtensions, deviceFeatures);
 
     // デバイスの初期化
-    vk::DeviceQueueCreateInfo queueCreateInfo(
-        {},
-        0,
-        0
-    );
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos = findQueues();
 
     vk::DeviceCreateInfo deviceCreateInfo(
         {},
-        1,
-        &queueCreateInfo,
+        static_cast<uint32_t>(queueCreateInfos.size()),
+        queueCreateInfos.data(),
         0,
         nullptr,
         deviceExtensions.size(),
@@ -50,7 +48,6 @@ void Application::initVulkan() {
         &deviceFeatures
     );
     device = physicalDevice.createDeviceUnique(deviceCreateInfo);
-
 }
 
 //物理デバイスの選択
@@ -84,7 +81,57 @@ bool Application::checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDev
     }
     return true;
 }
+
+//キューの検索
+std::vector<vk::DeviceQueueCreateInfo> Application::findQueues() {
+    std::vector<vk::QueueFamilyProperties> queueProps = physicalDevice.getQueueFamilyProperties();
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     
+    uint32_t graphicsQueueIndex = 0;
+    uint32_t graphicsQueueCount = 0;
+    uint32_t computeQueueIndex = 0;
+    uint32_t computeQueueCount = 0;
+
+    for(uint32_t i = 0; i < queueProps.size(); i++) {
+        if(queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+            graphicsQueueCount = std::max(graphicsQueueCount, queueProps[i].queueCount);
+            if(graphicsQueueCount == queueProps[i].queueCount) {
+                graphicsQueueIndex = i;
+            }
+        }
+        else if(queueProps[i].queueFlags & vk::QueueFlagBits::eCompute) {
+            computeQueueCount = std::max(computeQueueCount, queueProps[i].queueCount);
+            if(computeQueueCount == queueProps[i].queueCount) {
+                computeQueueIndex = i;
+            }
+        }
+    }
+
+    if(graphicsQueueIndex >= 0) {
+        std::vector<float> queuePriorities(graphicsQueueCount, 0.0);
+        for(uint32_t i = 0; i < graphicsQueueCount; i++) {
+            queuePriorities[i] = (graphicsQueueCount - 1 - i) * 0.1f;
+        }
+        queueCreateInfos.push_back(vk::DeviceQueueCreateInfo({}, 
+                                                             graphicsQueueIndex, 
+                                                             graphicsQueueCount, 
+                                                             queuePriorities.data()));
+    }
+    if(computeQueueIndex >= 0 && computeQueueIndex != graphicsQueueIndex) {
+        std::vector<float> queuePriorities(computeQueueCount, 0.0);
+        for(uint32_t i = 0; i < computeQueueCount; i++) {
+            queuePriorities[i] = (computeQueueCount - 1 - i) * 0.1f;
+        }
+        queueCreateInfos.push_back(vk::DeviceQueueCreateInfo({}, 
+                                                             computeQueueIndex, 
+                                                             computeQueueCount, 
+                                                             queuePriorities.data()));
+    }
+    else{
+        throw std::runtime_error("適切なキューが見つかりませんでした");
+    }
+    return queueCreateInfos;
+}    
 
 void Application::mainLoop() {
 
