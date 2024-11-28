@@ -19,6 +19,7 @@ class Application {
 
         vk::UniqueInstance instance;
         vk::PhysicalDevice physicalDevice;
+        vk::UniqueDevice device;
 
         void initWindow();
         void initVulkan();
@@ -26,7 +27,7 @@ class Application {
         void cleanup();
 
         //vulkan初期化用関数
-        vk::PhysicalDevice pickPhysicalDevice(const std::vector<const char*>& deviceExtensions);
+        vk::PhysicalDevice pickPhysicalDevice(const std::vector<const char*>& deviceExtensions, vk::PhysicalDeviceFeatures deviceFeatures);
         bool checkDeviceExtensionSupport(vk::PhysicalDevice device, const std::vector<const char*>& deviceExtensions);
-        bool checkDeviceFeatures(vk::PhysicalDevice device);
+        bool checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDeviceFeatures deviceFeatures);
 };

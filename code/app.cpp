@@ -27,14 +27,36 @@ void Application::initVulkan() {
 
     // 物理デバイスの初期化
     auto deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-    physicalDevice = pickPhysicalDevice(deviceExtensions);
+    vk::PhysicalDeviceFeatures deviceFeatures;
+    deviceFeatures.geometryShader = VK_TRUE;
+
+    physicalDevice = pickPhysicalDevice(deviceExtensions, deviceFeatures);
+
+    // デバイスの初期化
+    vk::DeviceQueueCreateInfo queueCreateInfo(
+        {},
+        0,
+        0
+    );
+
+    vk::DeviceCreateInfo deviceCreateInfo(
+        {},
+        1,
+        &queueCreateInfo,
+        0,
+        nullptr,
+        deviceExtensions.size(),
+        deviceExtensions.begin(),
+        &deviceFeatures
+    );
+    device = physicalDevice.createDeviceUnique(deviceCreateInfo);
 
 }
 
 //物理デバイスの選択
-vk::PhysicalDevice Application::pickPhysicalDevice(const std::vector<const char*>& deviceExtensions) {
+vk::PhysicalDevice Application::pickPhysicalDevice(const std::vector<const char*>& deviceExtensions, vk::PhysicalDeviceFeatures deviceFeatures) {
     for (const auto& device : instance->enumeratePhysicalDevices()) {
-        if(checkDeviceExtensionSupport(device, deviceExtensions) && checkDeviceFeatures(device)) {
+        if(checkDeviceExtensionSupport(device, deviceExtensions) && checkDeviceFeatures(device, deviceFeatures)) {
             return device;
         }
     }
@@ -52,9 +74,12 @@ bool Application::checkDeviceExtensionSupport(vk::PhysicalDevice device,  const 
 }
 
 //物理デバイスのfeaturesをチェック
-bool Application::checkDeviceFeatures(vk::PhysicalDevice device) {
+bool Application::checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDeviceFeatures requiredFeatures) {
     vk::PhysicalDeviceFeatures deviceFeatures = device.getFeatures();
-    if(!deviceFeatures.geometryShader) {
+    if(!deviceFeatures.robustBufferAccess && requiredFeatures.robustBufferAccess) {
+        return false;
+    }
+    else if(!deviceFeatures.geometryShader && requiredFeatures.geometryShader) {
         return false;
     }
     return true;
