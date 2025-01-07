@@ -48,6 +48,15 @@ void Application::initVulkan() {
         &deviceFeatures
     );
     device = physicalDevice.createDeviceUnique(deviceCreateInfo);
+
+    // キューの取得
+    for(uint32_t i = 0 ; i<queueCreateInfos[0].queueCount ; i++) {//グラフィックスキューの取得
+        graphicsQueues.push_back(device->getQueue(queueCreateInfos[0].queueFamilyIndex, i));
+    }
+
+    for(uint32_t i = 0 ; i<queueCreateInfos[1].queueCount ; i++) {//コンピュートキューの取得
+        computeQueues.push_back(device->getQueue(queueCreateInfos[1].queueFamilyIndex, i));
+    }
 }
 
 //物理デバイスの選択
@@ -92,7 +101,7 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues() {
     uint32_t computeQueueIndex = 0;
     uint32_t computeQueueCount = 0;
 
-    for(uint32_t i = 0; i < queueProps.size(); i++) {
+    for(uint32_t i = 0; i < queueProps.size(); i++) {//キューを持つ数が最大のものを選択
         if(queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) {
             graphicsQueueCount = std::max(graphicsQueueCount, queueProps[i].queueCount);
             if(graphicsQueueCount == queueProps[i].queueCount) {

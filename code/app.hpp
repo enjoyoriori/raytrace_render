@@ -20,6 +20,8 @@ class Application {
         vk::UniqueInstance instance;
         vk::PhysicalDevice physicalDevice;
         vk::UniqueDevice device;
+        std::vector<vk::Queue> graphicsQueues;
+        std::vector<vk::Queue> computeQueues;
 
         void initWindow();
         void initVulkan();
