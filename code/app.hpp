@@ -23,6 +23,11 @@ class Application {
         std::vector<vk::Queue> graphicsQueues;
         std::vector<vk::Queue> computeQueues;
 
+        vk::UniqueCommandPool graphicCommandPool;
+        std::vector<vk::UniqueCommandBuffer> graphicCommandBuffers;
+        vk::UniqueCommandPool computeCommandPool;
+        std::<vk::UniqueCommandBuffer> computeCommandBuffers;
+
         void initWindow();
         void initVulkan();
         void mainLoop();

@@ -57,6 +57,19 @@ void Application::initVulkan() {
     for(uint32_t i = 0 ; i<queueCreateInfos[1].queueCount ; i++) {//コンピュートキューの取得
         computeQueues.push_back(device->getQueue(queueCreateInfos[1].queueFamilyIndex, i));
     }
+
+    // コマンドプールの作成
+    vk::CommandPoolCreateInfo graphicCommandPoolCreateInfo({}, queueCreateInfos[0].queueFamilyIndex);
+    graphicCommandPool = device->createCommandPoolUnique(graphicCommandPoolCreateInfo);
+    vk::CommandPoolCreateInfo computeCommandPoolCreateInfo({}, queueCreateInfos[1].queueFamilyIndex);
+    computeCommandPool = device->createCommandPoolUnique(computeCommandPoolCreateInfo);
+
+    // コマンドバッファの作成
+    vk::CommandBufferAllocateInfo graphicCmdBufAllocInfo(graphicCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
+    graphicCommandBuffers = device->allocateCommandBuffersUnique(graphicCmdBufAllocInfo);
+    vk::CommandBufferAllocateInfo computeCmdBufAllocInfo(computeCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
+    computeCommandBuffers = device->allocateCommandBuffersUnique(computeCmdBufAllocInfo);
+    
 }
 
 //物理デバイスの選択
