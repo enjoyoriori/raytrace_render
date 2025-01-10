@@ -26,7 +26,10 @@ class Application {
         vk::UniqueCommandPool graphicCommandPool;
         std::vector<vk::UniqueCommandBuffer> graphicCommandBuffers;
         vk::UniqueCommandPool computeCommandPool;
-        std::<vk::UniqueCommandBuffer> computeCommandBuffers;
+        std::vector<vk::UniqueCommandBuffer> computeCommandBuffers;
+
+        //イメージ
+        vk::UniqueImage image;
 
         void initWindow();
         void initVulkan();
@@ -37,5 +40,10 @@ class Application {
         vk::PhysicalDevice pickPhysicalDevice(const std::vector<const char*>& deviceExtensions, vk::PhysicalDeviceFeatures deviceFeatures);
         bool checkDeviceExtensionSupport(vk::PhysicalDevice device, const std::vector<const char*>& deviceExtensions);
         bool checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDeviceFeatures deviceFeatures);
+
         std::vector<vk::DeviceQueueCreateInfo> findQueues();
+        
+        //イメージの作成
+        vk::UniqueImage createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage);
+        uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 };

@@ -69,6 +69,11 @@ void Application::initVulkan() {
     graphicCommandBuffers = device->allocateCommandBuffersUnique(graphicCmdBufAllocInfo);
     vk::CommandBufferAllocateInfo computeCmdBufAllocInfo(computeCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
     computeCommandBuffers = device->allocateCommandBuffersUnique(computeCmdBufAllocInfo);
+
+    // イメージの作成
+    image = createImage(WIDTH, HEIGHT, vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
+    
+    // パイプラインの作成
     
 }
 
@@ -154,6 +159,49 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues() {
     }
     return queueCreateInfos;
 }    
+
+//イメージの作成
+vk::UniqueImage Application::createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage) {
+    vk::ImageCreateInfo imageCreateInfo(
+        {},
+        vk::ImageType::e2D,
+        format,
+        vk::Extent3D(width, height, 1),
+        1,
+        1,
+        vk::SampleCountFlagBits::e1,
+        tiling,
+        usage,
+        vk::SharingMode::eExclusive,
+        0,
+        nullptr,
+        vk::ImageLayout::eUndefined
+    );
+
+    vk::UniqueImage image = device->createImageUnique(imageCreateInfo);
+
+    //メモリの割り当て
+    vk::MemoryRequirements memRequirements = device->getImageMemoryRequirements(image.get());
+    vk::MemoryAllocateInfo allocInfo(
+        memRequirements.size,
+        findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+    );
+    vk::UniqueDeviceMemory imageMemory = device->allocateMemoryUnique(allocInfo);
+    device->bindImageMemory(image.get(), imageMemory.get(), 0);
+
+    return image;
+}
+
+//メモリタイプの検索
+uint32_t Application::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
+    for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+    throw std::runtime_error("適切なメモリタイプが見つかりませんでした");
+}
 
 void Application::mainLoop() {
 
