@@ -7,14 +7,6 @@
         "glfw3",
         "glm",
         "tinyobjloader",
-        {
-            "name": "imgui",
-            "features": [
-              "glfw-binding",
-              "vulkan-binding",
-              "docking-experimental"
-            ]
-        },
         "imguizmo",
         "tinygltf",
         "miniaudio"
