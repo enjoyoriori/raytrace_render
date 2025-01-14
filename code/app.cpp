@@ -3,10 +3,10 @@
 // VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 void Application::initWindow() {
-    if (!glfwInit()) {
-        std::cout << "glfwInit failed" << std::endl;
-        return;
-    }
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 }
 
 void Application::initVulkan() {
@@ -15,26 +15,15 @@ void Application::initVulkan() {
     uint32_t instanceExtensionCount = 0;
     const char** requiredExtensions = glfwGetRequiredInstanceExtensions(&instanceExtensionCount);
     
-    vk::InstanceCreateInfo instCreateInfo;
-    
-    instCreateInfo.enabledLayerCount = requiredLayers.size();
-    instCreateInfo.ppEnabledLayerNames = requiredLayers.begin();
-    instCreateInfo.enabledExtensionCount = instanceExtensionCount;
-    instCreateInfo.ppEnabledExtensionNames = requiredExtensions;
-    // (
-    //     {},
-    //     nullptr,
-    //     requiredLayers.size(),
-    //     requiredLayers.begin() ,
-    //     instanceExtensionCount,
-    //     requiredExtensions
-    // );
+    vk::InstanceCreateInfo instCreateInfo(
+        {},
+        nullptr,
+        requiredLayers.size(),
+        requiredLayers.begin() ,
+        instanceExtensionCount,
+        requiredExtensions
+    );
     instance = vk::createInstanceUnique(instCreateInfo);
-
-    
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 
     // 物理デバイスの初期化
     auto deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };    //拡張機能のリスト
