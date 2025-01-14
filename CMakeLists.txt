@@ -7,8 +7,10 @@ find_package(glfw3 REQUIRED)
 
 file(GLOB_RECURSE PROJECT_SOURCES "code/*.cpp")
 
+
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 target_compile_options(${PROJECT_NAME} PUBLIC "/utf-8")
+
 
 # Lib
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)

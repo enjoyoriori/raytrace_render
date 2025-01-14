@@ -52,4 +52,6 @@ class Application {
         vk::UniqueImage createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage);
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
+        //シェーダーモジュールの作成
+        vk::UniqueShaderModule createShaderModule(std::string filename);
 };
