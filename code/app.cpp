@@ -74,7 +74,8 @@ void Application::initVulkan() {
     image = createImage(WIDTH, HEIGHT, vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
     
     // パイプラインの作成
-    
+    pipelineBuilder = std::make_unique<PipelineBuilder>();
+    pipeline = pipelineBuilder->buildPipeline(device.get(), {}, WIDTH, HEIGHT);
 }
 
 //物理デバイスの選択

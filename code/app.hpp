@@ -1,5 +1,7 @@
 #pragma once
 #include "header.hpp"
+#include "geometry.hpp"
+#include "pipelineBuilder.hpp"
 
 class Application {
 
@@ -28,6 +30,9 @@ class Application {
         vk::UniqueCommandPool computeCommandPool;
         std::vector<vk::UniqueCommandBuffer> computeCommandBuffers;
 
+        vk::UniquePipeline pipeline;
+        std::unique_ptr<PipelineBuilder> pipelineBuilder;
+
         //イメージ
         vk::UniqueImage image;
 
@@ -46,4 +51,5 @@ class Application {
         //イメージの作成
         vk::UniqueImage createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage);
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+
 };
