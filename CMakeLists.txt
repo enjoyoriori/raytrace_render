@@ -8,6 +8,7 @@ find_package(glfw3 REQUIRED)
 file(GLOB_RECURSE PROJECT_SOURCES "code/*.cpp" "code/*.hpp")
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS})
+target_compile_options(raytrace PUBLIC "/utf-8")
 
 # Lib
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)

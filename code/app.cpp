@@ -14,7 +14,6 @@ void Application::initVulkan() {
     auto requiredLayers = { "VK_LAYER_KHRONOS_validation" };
     uint32_t instanceExtensionCount = 0;
     const char** requiredExtensions = glfwGetRequiredInstanceExtensions(&instanceExtensionCount);
-    
     vk::InstanceCreateInfo instCreateInfo(
         {},
         nullptr,
@@ -23,11 +22,10 @@ void Application::initVulkan() {
         instanceExtensionCount,
         requiredExtensions
     );
-    instance = vk::createInstanceUnique(instCreateInfo);
 
+    instance = vk::createInstanceUnique(instCreateInfo);
     // 物理デバイスの初期化
     auto deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };    //拡張機能のリスト
-
     vk::PhysicalDeviceFeatures deviceFeatures = {}; // DeviceFeaturesの設定
     deviceFeatures.geometryShader = VK_TRUE;
 
@@ -73,9 +71,18 @@ void Application::initVulkan() {
     // イメージの作成
     image = createImage(WIDTH, HEIGHT, vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
     
+    // シェーダーモジュールの作成
+    vk::UniqueShaderModule vertShaderModule = createShaderModule("../shaders/shader.vert.spv");
+    vk::UniqueShaderModule fragShaderModule = createShaderModule("../shaders/shader.frag.spv");
+
     // パイプラインの作成
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {
+        vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule.get(), "main"),
+        vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule.get(), "main")
+    };
+
     pipelineBuilder = std::make_unique<PipelineBuilder>();
-    pipeline = pipelineBuilder->buildPipeline(device.get(), {}, WIDTH, HEIGHT);
+    pipeline = pipelineBuilder->buildPipeline(device.get(), shaderStages, WIDTH, HEIGHT);
 }
 
 //物理デバイスの選択
@@ -202,6 +209,27 @@ uint32_t Application::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlag
         }
     }
     throw std::runtime_error("適切なメモリタイプが見つかりませんでした");
+}
+
+vk::UniqueShaderModule Application::createShaderModule(std::string filename) {
+    size_t spvFileSz = std::filesystem::file_size(filename);
+
+    std::ifstream spvFile(filename, std::ios::binary);
+    if (!spvFile.is_open()) {
+        throw std::runtime_error("シェーダーファイルを開けませんでした: " + filename);
+    }
+
+    std::vector<char> spvFileData(spvFileSz);
+    spvFile.read(spvFileData.data(), spvFileSz);
+    if (!spvFile) {
+        throw std::runtime_error("シェーダーファイルの読み込みに失敗しました: " + filename);
+    }
+
+    vk::ShaderModuleCreateInfo shaderCreateInfo{};
+    shaderCreateInfo.codeSize = spvFileSz;
+    shaderCreateInfo.pCode = reinterpret_cast<const uint32_t*>(spvFileData.data());
+
+    return device->createShaderModuleUnique(shaderCreateInfo);
 }
 
 void Application::mainLoop() {
