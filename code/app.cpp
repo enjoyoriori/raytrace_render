@@ -33,7 +33,13 @@ void Application::initVulkan() {
     physicalDevice = pickPhysicalDevice(deviceExtensions, deviceFeatures);
 
     // デバイスの初期化
-    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos = findQueues();
+    std::vector<float> graphicQueuePriorities;
+    std::vector<float> computeQueuePriorities;
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos = findQueues(graphicQueuePriorities, computeQueuePriorities);
+
+    for(int i = 0; i < queueCreateInfos.at(0).queueCount; i++) {
+        std::cout << "Graphics Queue Priority: " << queueCreateInfos.at(0).pQueuePriorities[i] << std::endl;
+    }
 
     vk::DeviceCreateInfo deviceCreateInfo(
         {},
@@ -118,13 +124,13 @@ bool Application::checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDev
 }
 
 //キューの検索
-std::vector<vk::DeviceQueueCreateInfo> Application::findQueues() {
+std::vector<vk::DeviceQueueCreateInfo> Application::findQueues(std::vector<float> &graphicQueuePriorities, std::vector<float> &computeQueuePriorities) {
     std::vector<vk::QueueFamilyProperties> queueProps = physicalDevice.getQueueFamilyProperties();
-    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(2, vk::DeviceQueueCreateInfo{});
     
-    uint32_t graphicsQueueIndex = 0;
+    uint32_t graphicsQueueIndex = -1;
     uint32_t graphicsQueueCount = 0;
-    uint32_t computeQueueIndex = 0;
+    uint32_t computeQueueIndex = -1;
     uint32_t computeQueueCount = 0;
 
     for(uint32_t i = 0; i < queueProps.size(); i++) {//キューを持つ数が最大のものを選択
@@ -142,25 +148,32 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues() {
         }
     }
 
+    std::cout << "Graphics Queue Index: " << graphicsQueueCount << std::endl;
+
     if(graphicsQueueIndex >= 0) {
-        std::vector<float> queuePriorities(graphicsQueueCount, 0.0);
         for(uint32_t i = 0; i < graphicsQueueCount; i++) {
-            queuePriorities[i] = (graphicsQueueCount - 1 - i) * 0.1f;
+            float priority = static_cast<float>(i) / static_cast<float>(graphicsQueueCount);
+            graphicQueuePriorities.push_back(priority);
+            std::cout << "Graphics Queue Priority: " << priority << std::endl;
         }
-        queueCreateInfos.push_back(vk::DeviceQueueCreateInfo({}, 
-                                                             graphicsQueueIndex, 
-                                                             graphicsQueueCount, 
-                                                             queuePriorities.data()));
+        queueCreateInfos.at(0) = vk::DeviceQueueCreateInfo({}, 
+                                                           graphicsQueueIndex, 
+                                                           graphicsQueueCount, 
+                                                           graphicQueuePriorities.data());
+    }
+    else{
+        throw std::runtime_error("適切なキューが見つかりませんでした");
     }
     if(computeQueueIndex >= 0 && computeQueueIndex != graphicsQueueIndex) {
-        std::vector<float> queuePriorities(computeQueueCount, 0.0);
-        for(uint32_t i = 0; i < computeQueueCount; i++) {
-            queuePriorities[i] = (computeQueueCount - 1 - i) * 0.1f;
+        for(uint32_t i=0; i < computeQueueCount; i++) {
+            float priority = static_cast<float>(i) / static_cast<float>(computeQueueCount);
+            computeQueuePriorities.push_back(priority);
+            std::cout << "Compute Queue Priority: " << priority << std::endl;
         }
-        queueCreateInfos.push_back(vk::DeviceQueueCreateInfo({}, 
-                                                             computeQueueIndex, 
-                                                             computeQueueCount, 
-                                                             queuePriorities.data()));
+        queueCreateInfos.at(1) = vk::DeviceQueueCreateInfo({}, 
+                                                           computeQueueIndex, 
+                                                           computeQueueCount, 
+                                                           computeQueuePriorities.data());
     }
     else{
         throw std::runtime_error("適切なキューが見つかりませんでした");
