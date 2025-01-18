@@ -10,13 +10,33 @@ void Application::initWindow() {
 }
 
 void Application::initVulkan() {
+    
+    std::cout << "Vulkan Header Version: " << VK_HEADER_VERSION << std::endl;
+
+    // APIバージョンのプリント（ヘッダーで定義された最新のAPIバージョンを表示）
+    std::cout << "Vulkan API Version: " 
+              << VK_VERSION_MAJOR(VK_HEADER_VERSION_COMPLETE)
+              << "." 
+              << VK_VERSION_MINOR(VK_HEADER_VERSION_COMPLETE)
+              << "." 
+              << VK_VERSION_PATCH(VK_HEADER_VERSION_COMPLETE)
+              << std::endl;
+
     // インスタンスの初期化
+
+    vk::ApplicationInfo appInfo{};
+    appInfo.pApplicationName = "Vulkan Application";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "No Engine";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_3;
+
     auto requiredLayers = { "VK_LAYER_KHRONOS_validation" };
     uint32_t instanceExtensionCount = 0;
     const char** requiredExtensions = glfwGetRequiredInstanceExtensions(&instanceExtensionCount);
     vk::InstanceCreateInfo instCreateInfo(
         {},
-        nullptr,
+        &appInfo,
         requiredLayers.size(),
         requiredLayers.begin() ,
         instanceExtensionCount,
@@ -25,7 +45,9 @@ void Application::initVulkan() {
 
     instance = vk::createInstanceUnique(instCreateInfo);
     // 物理デバイスの初期化
-    auto deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };    //拡張機能のリスト
+    auto deviceExtensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
     vk::PhysicalDeviceFeatures deviceFeatures = {}; // DeviceFeaturesの設定
     deviceFeatures.geometryShader = VK_TRUE;
 
@@ -37,10 +59,6 @@ void Application::initVulkan() {
     std::vector<float> computeQueuePriorities;
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos = findQueues(graphicQueuePriorities, computeQueuePriorities);
 
-    for(int i = 0; i < queueCreateInfos.at(0).queueCount; i++) {
-        std::cout << "Graphics Queue Priority: " << queueCreateInfos.at(0).pQueuePriorities[i] << std::endl;
-    }
-
     vk::DeviceCreateInfo deviceCreateInfo(
         {},
         static_cast<uint32_t>(queueCreateInfos.size()),
@@ -51,7 +69,13 @@ void Application::initVulkan() {
         deviceExtensions.begin(),
         &deviceFeatures
     );
-    device = physicalDevice.createDeviceUnique(deviceCreateInfo);
+
+    vk::StructureChain createInfoChain{
+        deviceCreateInfo,
+        vk::PhysicalDeviceDynamicRenderingFeatures{true}
+    };
+
+    device = physicalDevice.createDeviceUnique(createInfoChain.get<vk::DeviceCreateInfo>());
 
     // キューの取得
     for(uint32_t i = 0 ; i<queueCreateInfos[0].queueCount ; i++) {//グラフィックスキューの取得

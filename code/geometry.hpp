@@ -82,10 +82,10 @@ struct Object {
 
     static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions() {
         return {
-            vk::VertexInputAttributeDescription(5, 1, vk::Format::eR32G32B32A32Sfloat, 0),
-            vk::VertexInputAttributeDescription(6, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4)),
-            vk::VertexInputAttributeDescription(7, 1, vk::Format::eR32G32B32A32Sfloat, 2 * sizeof(glm::vec4)),
-            vk::VertexInputAttributeDescription(8, 1, vk::Format::eR32G32B32A32Sfloat, 3 * sizeof(glm::vec4))
+            vk::VertexInputAttributeDescription(7, 1, vk::Format::eR32G32B32A32Sfloat, 0),
+            vk::VertexInputAttributeDescription(8, 1, vk::Format::eR32G32B32A32Sfloat, sizeof(glm::vec4)),
+            vk::VertexInputAttributeDescription(9, 1, vk::Format::eR32G32B32A32Sfloat, 2 * sizeof(glm::vec4)),
+            vk::VertexInputAttributeDescription(10, 1, vk::Format::eR32G32B32A32Sfloat, 3 * sizeof(glm::vec4))
         };
     }
 };

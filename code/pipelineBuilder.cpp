@@ -121,6 +121,10 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
 
     vk::UniquePipelineLayout pipelineLayout = device.createPipelineLayoutUnique({});
 
+    vk::PipelineRenderingCreateInfo renderingCreateInfo{{}};
+    renderingCreateInfo.setColorAttachmentCount(1);
+    renderingCreateInfo.setpColorAttachmentFormats();
+
     vk::GraphicsPipelineCreateInfo pipelineCreateInfo(
         {},//flags
         shaderStages.size(),//stageCount
@@ -140,6 +144,7 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
         VK_NULL_HANDLE, // basePipelineHandle
         -1 // basePipelineIndex
     );
+    pipelineCreateInfo.setPNext(&renderingCreateInfo);
 
     vk::UniquePipeline pipeline = device.createGraphicsPipelineUnique(VK_NULL_HANDLE, pipelineCreateInfo).value;
     return pipeline;
