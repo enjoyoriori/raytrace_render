@@ -121,9 +121,16 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
 
     vk::UniquePipelineLayout pipelineLayout = device.createPipelineLayoutUnique({});
 
-    vk::PipelineRenderingCreateInfo renderingCreateInfo{{}};
-    renderingCreateInfo.setColorAttachmentCount(1);
-    renderingCreateInfo.setpColorAttachmentFormats();
+    //RenderingCreateInfoの設定
+    std::vector<vk::Format> colorAttachmentFormats = {vk::Format::eR8G8B8A8Unorm};
+
+    vk::PipelineRenderingCreateInfo renderingCreateInfo(
+        0,//viewMask
+        colorAttachmentFormats.size(),//colorAttachmentCount
+        colorAttachmentFormats.data(),//pColorAttachmentFormats
+        vk::Format::eUndefined,//depthAttachmentFormat
+        vk::Format::eUndefined//stencilAttachmentFormat
+    );
 
     vk::GraphicsPipelineCreateInfo pipelineCreateInfo(
         {},//flags

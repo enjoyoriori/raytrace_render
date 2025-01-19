@@ -113,6 +113,9 @@ void Application::initVulkan() {
 
     pipelineBuilder = std::make_unique<PipelineBuilder>();
     pipeline = pipelineBuilder->buildPipeline(device.get(), shaderStages, WIDTH, HEIGHT);
+
+    //スワップチェーンの作成
+    void createSwapchain();
 }
 
 //物理デバイスの選択
@@ -268,6 +271,63 @@ vk::UniqueShaderModule Application::createShaderModule(std::string filename) {
 
     return device->createShaderModuleUnique(shaderCreateInfo);
 }
+
+//スワップチェーンの作成
+void Application::createSwapchain() {
+
+    VkSurfaceKHR c_surface;
+    auto result = glfwCreateWindowSurface(instance.get(), window, nullptr, &c_surface);
+    if (result != VK_SUCCESS) {
+        const char* err;
+        glfwGetError(&err);
+        std::cout << err << std::endl;
+        glfwTerminate();
+        throw std::runtime_error("スワップチェーンの作成に失敗しました");
+    }
+    surface = vk::UniqueSurfaceKHR{c_surface, instance.get()};
+
+    vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface.get());
+    std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface.get());
+    std::vector<vk::PresentModeKHR> surfacePresentModes = physicalDevice.getSurfacePresentModesKHR(surface.get());
+
+    vk::SurfaceFormatKHR swapchainFormat = surfaceFormats[0];
+    vk::PresentModeKHR presentMode = surfacePresentModes[0];
+
+    vk::SwapchainCreateInfoKHR swapchainCreateInfo(
+        {},
+        surface.get(),
+        surfaceCapabilities.minImageCount + 1,
+        swapchainFormat.format,
+        swapchainFormat.colorSpace,
+        surfaceCapabilities.currentExtent,
+        1,
+        vk::ImageUsageFlagBits::eColorAttachment,
+        vk::SharingMode::eExclusive,
+        0,
+        nullptr,
+        surfaceCapabilities.currentTransform,
+        vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        presentMode,
+        VK_TRUE,
+        nullptr
+    );
+    swapchain = device->createSwapchainKHRUnique(swapchainCreateInfo);
+    swapchainImages = device->getSwapchainImagesKHR(swapchain.get());
+
+    for(uint32_t i = 0; i < swapchainImages.size(); i++) {
+        vk::ImageViewCreateInfo imageViewCreateInfo(
+            {},
+            swapchainImages[i],
+            vk::ImageViewType::e2D,
+            swapchainFormat.format,
+            vk::ComponentMapping(),
+            vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)
+        );
+        swapchainImageViews.push_back(device->createImageViewUnique(imageViewCreateInfo));
+    }
+
+}
+    
 
 void Application::mainLoop() {
 

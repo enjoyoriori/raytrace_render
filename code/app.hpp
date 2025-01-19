@@ -33,6 +33,11 @@ class Application {
         vk::UniquePipeline pipeline;
         std::unique_ptr<PipelineBuilder> pipelineBuilder;
 
+        vk::UniqueSurfaceKHR surface;
+        vk::UniqueSwapchainKHR swapchain;
+        std::vector<vk::Image> swapchainImages;
+        std::vector<vk::UniqueImageView> swapchainImageViews;
+
         //イメージ
         vk::UniqueImage image;
 
@@ -54,4 +59,7 @@ class Application {
 
         //シェーダーモジュールの作成
         vk::UniqueShaderModule createShaderModule(std::string filename);
+
+        //スワップチェーンの作成
+        void createSwapchain();
 };
