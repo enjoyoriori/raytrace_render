@@ -14,8 +14,8 @@ class Application {
         }
 
     private:
-        const uint32_t WIDTH = 1920;
-        const uint32_t HEIGHT = 1080;
+        const uint32_t WIDTH = 1280;
+        const uint32_t HEIGHT = 720;
 
         GLFWwindow* window;
 
@@ -23,12 +23,12 @@ class Application {
         vk::PhysicalDevice physicalDevice;
         vk::UniqueDevice device;
         std::vector<vk::Queue> graphicsQueues;
-        std::vector<vk::Queue> computeQueues;
+        // std::vector<vk::Queue> computeQueues;
 
         vk::UniqueCommandPool graphicCommandPool;
         std::vector<vk::UniqueCommandBuffer> graphicCommandBuffers;
-        vk::UniqueCommandPool computeCommandPool;
-        std::vector<vk::UniqueCommandBuffer> computeCommandBuffers;
+        // vk::UniqueCommandPool computeCommandPool;
+        // std::vector<vk::UniqueCommandBuffer> computeCommandBuffers;
 
         vk::UniquePipeline pipeline;
         std::unique_ptr<PipelineBuilder> pipelineBuilder;
