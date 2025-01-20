@@ -14,8 +14,8 @@ class Application {
         }
 
     private:
-        const uint32_t WIDTH = 1920;
-        const uint32_t HEIGHT = 1080;
+        const uint32_t WIDTH = 1280;
+        const uint32_t HEIGHT = 720;
 
         GLFWwindow* window;
 
