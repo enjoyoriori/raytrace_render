@@ -405,22 +405,22 @@ void Application::drawFrame() {
     vk::CommandBufferBeginInfo beginInfo;
     graphicCommandBuffers.at(0)->begin(beginInfo);
 
-    vk::ImageMemoryBarrier firstMemoryBarrier;
-    firstMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eNone;
-    firstMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-    firstMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
-    firstMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
-    firstMemoryBarrier.image = swapchainImages[imageIndex];
-    firstMemoryBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
+    // vk::ImageMemoryBarrier firstMemoryBarrier;
+    // firstMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eNone;
+    // firstMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eNone;
+    // firstMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
+    // firstMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    // firstMemoryBarrier.image = swapchainImages[imageIndex];
+    // firstMemoryBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
 
-    graphicCommandBuffers.at(0)->pipelineBarrier(
-        vk::PipelineStageFlagBits::eTopOfPipe, 
-        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        {}, 
-        {},
-        {},
-        firstMemoryBarrier
-    );
+    // graphicCommandBuffers.at(0)->pipelineBarrier(
+    //     vk::PipelineStageFlagBits::eBottomOfPipe, 
+    //     vk::PipelineStageFlagBits::eTopOfPipe, 
+    //     {}, 
+    //     {},
+    //     {},
+    //     firstMemoryBarrier
+    // );
 
     graphicCommandBuffers.at(0)->beginRendering(renderingInfo);
 
@@ -434,7 +434,7 @@ void Application::drawFrame() {
 
     vk::ImageMemoryBarrier imageMemoryBarrier;
     imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-    imageMemoryBarrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    imageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
     imageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
     imageMemoryBarrier.image = swapchainImages[imageIndex];
     imageMemoryBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
@@ -457,8 +457,8 @@ void Application::drawFrame() {
         {}
     );
 
-    device->waitIdle();
-    //graphicsQueues.at(0).waitIdle();
+    // device->waitIdle();
+    // graphicsQueues.at(0).waitIdle();
 
     vk::PresentInfoKHR presentInfo;
 
