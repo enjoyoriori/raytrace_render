@@ -460,6 +460,8 @@ void Application::drawFrame() {
     // device->waitIdle();
     // graphicsQueues.at(0).waitIdle();
 
+    graphicsQueues.at(0).submit({submitInfo});
+
     vk::PresentInfoKHR presentInfo;
 
     auto presentSwapchains = { swapchain.get() };
