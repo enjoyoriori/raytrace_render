@@ -70,6 +70,9 @@ class Application {
         //スワップチェーンの作成
         void createSwapchain();
 
+        //頂点バッファの作成
+        vk::UniqueBuffer createBuffer(std::vector<Object> scene);
+
         //レンダリング
         void drawFrame();
 };
