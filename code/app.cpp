@@ -84,21 +84,21 @@ void Application::initVulkan() {
         graphicsQueues.push_back(device->getQueue(queueCreateInfos[0].queueFamilyIndex, i));
     }
 
-    for(uint32_t i = 0 ; i<queueCreateInfos[1].queueCount ; i++) {//コンピュートキューの取得
-        computeQueues.push_back(device->getQueue(queueCreateInfos[1].queueFamilyIndex, i));
-    }
+    // for(uint32_t i = 0 ; i<queueCreateInfos[1].queueCount ; i++) {//コンピュートキューの取得
+    //     computeQueues.push_back(device->getQueue(queueCreateInfos[1].queueFamilyIndex, i));
+    // }
 
     // コマンドプールの作成
     vk::CommandPoolCreateInfo graphicCommandPoolCreateInfo({vk::CommandPoolCreateFlagBits::eResetCommandBuffer}, queueCreateInfos[0].queueFamilyIndex);
     graphicCommandPool = device->createCommandPoolUnique(graphicCommandPoolCreateInfo);
-    vk::CommandPoolCreateInfo computeCommandPoolCreateInfo({}, queueCreateInfos[1].queueFamilyIndex);
-    computeCommandPool = device->createCommandPoolUnique(computeCommandPoolCreateInfo);
+    // vk::CommandPoolCreateInfo computeCommandPoolCreateInfo({}, queueCreateInfos[1].queueFamilyIndex);
+    // computeCommandPool = device->createCommandPoolUnique(computeCommandPoolCreateInfo);
 
     // コマンドバッファの作成
     vk::CommandBufferAllocateInfo graphicCmdBufAllocInfo(graphicCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
     graphicCommandBuffers = device->allocateCommandBuffersUnique(graphicCmdBufAllocInfo);
-    vk::CommandBufferAllocateInfo computeCmdBufAllocInfo(computeCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
-    computeCommandBuffers = device->allocateCommandBuffersUnique(computeCmdBufAllocInfo);
+    // vk::CommandBufferAllocateInfo computeCmdBufAllocInfo(computeCommandPool.get(), vk::CommandBufferLevel::ePrimary, 1);
+    // computeCommandBuffers = device->allocateCommandBuffersUnique(computeCmdBufAllocInfo);
 
     // イメージの作成
     image = createImage(WIDTH, HEIGHT, vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
@@ -185,7 +185,7 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues(std::vector<float
                 graphicsQueueIndex = i;
             }
         }
-        else if(queueProps[i].queueFlags & vk::QueueFlagBits::eCompute) {
+        if(queueProps[i].queueFlags & vk::QueueFlagBits::eCompute) {
             computeQueueCount = std::max(computeQueueCount, queueProps[i].queueCount);
             if(computeQueueCount == queueProps[i].queueCount) {
                 computeQueueIndex = i;
@@ -209,7 +209,7 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues(std::vector<float
     else{
         throw std::runtime_error("適切なキューが見つかりませんでした");
     }
-    if(computeQueueIndex >= 0 && computeQueueIndex != graphicsQueueIndex) {
+    if(computeQueueIndex >= 0) {
         for(uint32_t i=0; i < computeQueueCount; i++) {
             float priority = static_cast<float>(i) / static_cast<float>(computeQueueCount);
             computeQueuePriorities.push_back(priority);
@@ -222,6 +222,9 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues(std::vector<float
     }
     else{
         throw std::runtime_error("適切なキューが見つかりませんでした");
+    }
+    if(queueCreateInfos.at(1).queueFamilyIndex == queueCreateInfos.at(0).queueFamilyIndex) {
+        queueCreateInfos.pop_back();
     }
     return queueCreateInfos;
 }    
