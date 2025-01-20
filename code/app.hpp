@@ -33,10 +33,13 @@ class Application {
         vk::UniquePipeline pipeline;
         std::unique_ptr<PipelineBuilder> pipelineBuilder;
 
+        VkSurfaceKHR c_surface;
         vk::UniqueSurfaceKHR surface;
         vk::UniqueSwapchainKHR swapchain;
         std::vector<vk::Image> swapchainImages;
         std::vector<vk::UniqueImageView> swapchainImageViews;
+
+        vk::UniqueFence swapchainImgFence;
 
         //イメージ
         vk::UniqueImage image;
@@ -51,7 +54,11 @@ class Application {
         bool checkDeviceExtensionSupport(vk::PhysicalDevice device, const std::vector<const char*>& deviceExtensions);
         bool checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDeviceFeatures deviceFeatures);
 
+        //サーフェスの作成
+        void createSurface();
+
         std::vector<vk::DeviceQueueCreateInfo> findQueues(std::vector<float> &graphicQueuePriorities, std::vector<float> &computeQueuePriorities);
+        uint32_t checkPresentationSupport(vk::SurfaceKHR surface);
         
         //イメージの作成
         vk::UniqueImage createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage);
@@ -62,4 +69,7 @@ class Application {
 
         //スワップチェーンの作成
         void createSwapchain();
+
+        //レンダリング
+        void drawFrame();
 };

@@ -29,12 +29,21 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
     std::vector<vk::VertexInputBindingDescription> bindingDescriptions = {bindingDescription, instanceBindingDescription};
     attributeDescriptions.insert(attributeDescriptions.end(), instanceAttributeDescriptions.begin(), instanceAttributeDescriptions.end());
     
+    /*
     vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
         {},//flags
         bindingDescriptions.size(),//vertexBindingDescriptionCount
         bindingDescriptions.data(),//pVertexBindingDescriptions
         attributeDescriptions.size(),//vertexAttributeDescriptionCount
         attributeDescriptions.data()//pVertexAttributeDescriptions
+    );
+    */
+    vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
+        {}, // flags
+        0,  // vertexBindingDescriptionCount
+        nullptr, // pVertexBindingDescriptions
+        0,  // vertexAttributeDescriptionCount
+        nullptr // pVertexAttributeDescriptions
     );
 
     //InputAssemblyStateの設定
@@ -119,10 +128,18 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
         dynamicStates.data()//pDynamicStates
     );
 
-    vk::UniquePipelineLayout pipelineLayout = device.createPipelineLayoutUnique({});
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo(
+        {},//flags
+        0,//setLayoutCount
+        nullptr,//pSetLayouts
+        0,//pushConstantRangeCount
+        nullptr//pPushConstantRanges
+    );
+
+    vk::UniquePipelineLayout pipelineLayout = device.createPipelineLayoutUnique(pipelineLayoutInfo);
 
     //RenderingCreateInfoの設定
-    std::vector<vk::Format> colorAttachmentFormats = {vk::Format::eR8G8B8A8Unorm};
+    std::vector<vk::Format> colorAttachmentFormats = {vk::Format::eB8G8R8A8Unorm};
 
     vk::PipelineRenderingCreateInfo renderingCreateInfo(
         0,//viewMask
@@ -138,13 +155,13 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
         shaderStages.data(),//pStages
         &vertexInputInfo, // pVertexInputState
         &inputAssembly, // pInputAssemblyState
-        nullptr, // pTessellationState
+        VK_NULL_HANDLE, // pTessellationState
         &viewportState, // pViewportState
         &rasterizer, // pRasterizationState
         &multisampling, // pMultisampleState
         nullptr, // pDepthStencilState
         &colorBlending, // pColorBlendState
-        &dynamicState, // pDynamicState
+        VK_NULL_HANDLE, // pDynamicState
         pipelineLayout.get(), // layout
         VK_NULL_HANDLE, // renderPass
         0, // subpass

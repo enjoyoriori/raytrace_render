@@ -54,6 +54,9 @@ void Application::initVulkan() {
     // 物理デバイスの選択
     physicalDevice = pickPhysicalDevice(deviceExtensions, deviceFeatures);
 
+    // サーフェスの作成
+    createSurface();
+
     // デバイスの初期化
     std::vector<float> graphicQueuePriorities;
     std::vector<float> computeQueuePriorities;
@@ -76,7 +79,6 @@ void Application::initVulkan() {
     };
 
     device = physicalDevice.createDeviceUnique(createInfoChain.get<vk::DeviceCreateInfo>());
-
     // キューの取得
     for(uint32_t i = 0 ; i<queueCreateInfos[0].queueCount ; i++) {//グラフィックスキューの取得
         graphicsQueues.push_back(device->getQueue(queueCreateInfos[0].queueFamilyIndex, i));
@@ -87,7 +89,7 @@ void Application::initVulkan() {
     }
 
     // コマンドプールの作成
-    vk::CommandPoolCreateInfo graphicCommandPoolCreateInfo({}, queueCreateInfos[0].queueFamilyIndex);
+    vk::CommandPoolCreateInfo graphicCommandPoolCreateInfo({vk::CommandPoolCreateFlagBits::eResetCommandBuffer}, queueCreateInfos[0].queueFamilyIndex);
     graphicCommandPool = device->createCommandPoolUnique(graphicCommandPoolCreateInfo);
     vk::CommandPoolCreateInfo computeCommandPoolCreateInfo({}, queueCreateInfos[1].queueFamilyIndex);
     computeCommandPool = device->createCommandPoolUnique(computeCommandPoolCreateInfo);
@@ -114,8 +116,11 @@ void Application::initVulkan() {
     pipelineBuilder = std::make_unique<PipelineBuilder>();
     pipeline = pipelineBuilder->buildPipeline(device.get(), shaderStages, WIDTH, HEIGHT);
 
-    //スワップチェーンの作成
-    void createSwapchain();
+    // スワップチェーンの作成
+    createSwapchain();
+    //スワップチェーンイメージ用フェンスの作成
+    vk::FenceCreateInfo fenceCreateInfo{};
+    swapchainImgFence = device->createFenceUnique(fenceCreateInfo);
 }
 
 //物理デバイスの選択
@@ -150,6 +155,19 @@ bool Application::checkDeviceFeatures(vk::PhysicalDevice device, vk::PhysicalDev
     return true;
 }
 
+//サーフェスの作成
+void Application::createSurface() {
+    auto result = glfwCreateWindowSurface(instance.get(), window, nullptr, &c_surface);
+    if (result != VK_SUCCESS) {
+        const char* err;
+        glfwGetError(&err);
+        std::cout << err << std::endl;
+        glfwTerminate();
+        throw std::runtime_error("サーフェスの作成に失敗しました");
+    }
+    surface = vk::UniqueSurfaceKHR{c_surface, instance.get()};
+}
+    
 //キューの検索
 std::vector<vk::DeviceQueueCreateInfo> Application::findQueues(std::vector<float> &graphicQueuePriorities, std::vector<float> &computeQueuePriorities) {
     std::vector<vk::QueueFamilyProperties> queueProps = physicalDevice.getQueueFamilyProperties();
@@ -161,7 +179,7 @@ std::vector<vk::DeviceQueueCreateInfo> Application::findQueues(std::vector<float
     uint32_t computeQueueCount = 0;
 
     for(uint32_t i = 0; i < queueProps.size(); i++) {//キューを持つ数が最大のものを選択
-        if(queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+        if(queueProps[i].queueFlags & vk::QueueFlagBits::eGraphics && physicalDevice.getSurfaceSupportKHR(i, surface.get())) {
             graphicsQueueCount = std::max(graphicsQueueCount, queueProps[i].queueCount);
             if(graphicsQueueCount == queueProps[i].queueCount) {
                 graphicsQueueIndex = i;
@@ -275,17 +293,6 @@ vk::UniqueShaderModule Application::createShaderModule(std::string filename) {
 //スワップチェーンの作成
 void Application::createSwapchain() {
 
-    VkSurfaceKHR c_surface;
-    auto result = glfwCreateWindowSurface(instance.get(), window, nullptr, &c_surface);
-    if (result != VK_SUCCESS) {
-        const char* err;
-        glfwGetError(&err);
-        std::cout << err << std::endl;
-        glfwTerminate();
-        throw std::runtime_error("スワップチェーンの作成に失敗しました");
-    }
-    surface = vk::UniqueSurfaceKHR{c_surface, instance.get()};
-
     vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface.get());
     std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface.get());
     std::vector<vk::PresentModeKHR> surfacePresentModes = physicalDevice.getSurfacePresentModesKHR(surface.get());
@@ -330,6 +337,141 @@ void Application::createSwapchain() {
     
 
 void Application::mainLoop() {
+    //while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+        drawFrame();
+    //}
+}
+
+
+std::string layoutToString(vk::ImageLayout layout) {
+    switch(layout) {
+        case vk::ImageLayout::eUndefined: return "VK_IMAGE_LAYOUT_UNDEFINED";
+        case vk::ImageLayout::eGeneral: return "VK_IMAGE_LAYOUT_GENERAL";
+        case vk::ImageLayout::eColorAttachmentOptimal: return "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL";
+        case vk::ImageLayout::eDepthStencilAttachmentOptimal: return "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL";
+        case vk::ImageLayout::eDepthStencilReadOnlyOptimal: return "VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL";
+        case vk::ImageLayout::eShaderReadOnlyOptimal: return "VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";
+        case vk::ImageLayout::eTransferSrcOptimal: return "VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL";
+        case vk::ImageLayout::eTransferDstOptimal: return "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
+        case vk::ImageLayout::ePreinitialized: return "VK_IMAGE_LAYOUT_PREINITIALIZED";
+        case vk::ImageLayout::ePresentSrcKHR: return "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR";
+        default: return "Unknown Layout";
+    }
+}
+
+void Application::drawFrame() {
+    device->resetFences({swapchainImgFence.get()});
+    vk::ResultValue acquireResult = device->acquireNextImageKHR(swapchain.get(), UINT64_MAX,{} ,swapchainImgFence.get());
+
+    if (acquireResult.result != vk::Result::eSuccess) {
+        throw std::runtime_error("スワップチェーンイメージの取得に失敗しました");
+    }
+    uint32_t imageIndex = acquireResult.value;
+
+    if (device->waitForFences({swapchainImgFence.get()}, VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
+        throw std::runtime_error("スワップチェーンイメージの取得に失敗しました");
+    }
+
+    std::vector<vk::RenderingAttachmentInfo> colorAttachments = {
+        vk::RenderingAttachmentInfo(
+            swapchainImageViews.at(imageIndex).get(),// imageView
+            vk::ImageLayout::eColorAttachmentOptimal, // imageLayout
+            vk::ResolveModeFlagBits::eNone, // resolveMode
+            {},                          // resolveImageView
+            vk::ImageLayout::eUndefined, // resolveImageLayout
+            vk::AttachmentLoadOp::eClear, // loadOp
+            vk::AttachmentStoreOp::eStore, // storeOp
+            vk::ClearValue{}             // clearValue
+        )
+    };
+
+    vk::RenderingInfo renderingInfo(
+        {},//flags
+        vk::Rect2D({0, 0},{WIDTH, HEIGHT}),//renderArea
+        1,//layerCount
+        0,//viewMask
+        colorAttachments.size(),//colorAttachmentCount
+        colorAttachments.data(),//pColorAttachments
+        nullptr,//pDepthAttachment
+        nullptr//pStencilAttachment
+    );
+
+    graphicCommandBuffers.at(0)->reset();
+
+    vk::CommandBufferBeginInfo beginInfo;
+    graphicCommandBuffers.at(0)->begin(beginInfo);
+
+    vk::ImageMemoryBarrier firstMemoryBarrier;
+    firstMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eNone;
+    firstMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+    firstMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
+    firstMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    firstMemoryBarrier.image = swapchainImages[imageIndex];
+    firstMemoryBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
+
+    graphicCommandBuffers.at(0)->pipelineBarrier(
+        vk::PipelineStageFlagBits::eTopOfPipe, 
+        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+        {}, 
+        {},
+        {},
+        firstMemoryBarrier
+    );
+
+    graphicCommandBuffers.at(0)->beginRendering(renderingInfo);
+
+    vk::ClearValue clearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}));
+
+
+    graphicCommandBuffers.at(0)->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.get());
+    
+    graphicCommandBuffers.at(0)->draw(3, 1, 0, 0);
+    graphicCommandBuffers.at(0)->endRendering();
+
+    vk::ImageMemoryBarrier imageMemoryBarrier;
+    imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+    imageMemoryBarrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    imageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+    imageMemoryBarrier.image = swapchainImages[imageIndex];
+    imageMemoryBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 });
+
+    graphicCommandBuffers.at(0)->pipelineBarrier(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+        vk::PipelineStageFlagBits::eBottomOfPipe, 
+        {}, 
+        {},
+        {},
+        imageMemoryBarrier
+    );
+    graphicCommandBuffers.at(0)->end();
+
+    vk::CommandBuffer submitCommandBuffer = graphicCommandBuffers.at(0).get();
+    vk::SubmitInfo submitInfo(
+        {},
+        {},
+        {submitCommandBuffer},
+        {}
+    );
+
+    device->waitIdle();
+    //graphicsQueues.at(0).waitIdle();
+
+    vk::PresentInfoKHR presentInfo;
+
+    auto presentSwapchains = { swapchain.get() };
+    auto imgIndices = { imageIndex };
+
+    presentInfo.swapchainCount = presentSwapchains.size();
+    presentInfo.pSwapchains = presentSwapchains.begin();
+    presentInfo.pImageIndices = imgIndices.begin();
+
+     std::cout << "[Debug] imageView layout: "
+              << layoutToString(colorAttachments[imageIndex].imageLayout) << std::endl;
+
+    graphicsQueues.at(0).presentKHR(presentInfo);
+
+    graphicsQueues.at(0).waitIdle();
 
 }
 
