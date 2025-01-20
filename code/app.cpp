@@ -338,6 +338,30 @@ void Application::createSwapchain() {
 
 }
     
+vk::UniqueBuffer Application::createBuffer(std::vector<Object> scene) {
+    uint32_t vertexCount = 0;
+    uint32_t indexCount = 0;
+
+    for(auto object : scene) {
+        if(!object.Instance) {
+            for(auto primitive : object.mesh.primitives) {
+                vertexCount += primitive.vertices.size();
+                indexCount += primitive.indices.size();
+            }
+        }
+    }
+
+    vk::BufferCreateInfo bufferCreateInfo(
+        {},
+        vertexCount * sizeof(Vertex),
+        vk::BufferUsageFlagBits::eVertexBuffer,
+        vk::SharingMode::eExclusive,
+        0,
+        nullptr
+    );
+        
+    
+}
 
 void Application::mainLoop() {
     //while (!glfwWindowShouldClose(window)) {
