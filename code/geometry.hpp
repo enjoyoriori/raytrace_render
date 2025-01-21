@@ -71,13 +71,17 @@ struct Transform {
     glm::vec3 scale;
 };
 
+struct InstanceAttribute {
+    glm::mat4 model;
+};
+
 struct Object {
     bool Instance;
     Mesh mesh;
-    std::vector<glm::mat4> model;
+    std::vector<InstanceAttribute> instanceAttributes;
 
     static vk::VertexInputBindingDescription getBindingDescription() {
-        return vk::VertexInputBindingDescription(1, sizeof(glm::vec4) * 4, vk::VertexInputRate::eInstance);
+        return vk::VertexInputBindingDescription(1, sizeof(InstanceAttribute), vk::VertexInputRate::eInstance);
     }
 
     static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions() {

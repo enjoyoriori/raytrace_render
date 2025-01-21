@@ -30,9 +30,10 @@ class Application {
         // vk::UniqueCommandPool computeCommandPool;
         // std::vector<vk::UniqueCommandBuffer> computeCommandBuffers;
         
-        std::vector<std::psir<vk::UniqueBuffer, vk::UniqueDeviceMemory>> vertexBuffers;
-        std::vector<std::psir<vk::UniqueBuffer, vk::UniqueDeviceMemory>> indexBuffers;
-        std::vector<std::psir<vk::UniqueBuffer, vk::UniqueDeviceMemory>> instanceBuffers;
+        std::vector<std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory>> vertexBuffers;
+        std::vector<std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory>> indexBuffers;
+        std::vector<std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory>> instanceBuffers;
+        std::vector<std::pair<uint32_t, uint32_t>> indexCounts; //頂点数(のべ)とインスタンス数
 
         vk::UniquePipeline pipeline;
         std::unique_ptr<PipelineBuilder> pipelineBuilder;
@@ -79,5 +80,5 @@ class Application {
         void setBuffer(std::vector<Object> scene);
 
         //レンダリング
-        void drawFrame();
+        void drawFrame(uint32_t imageIndex);
 };

@@ -12,49 +12,34 @@ void Application::initWindow() {
 void Application::initVulkan() {
 
     //仮のシーン
-    // 立方体の頂点データ
+    std::vector<Object> scene;
+    // 平面の頂点データ
     std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
-        {{0.5f, -0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
-        {{0.5f, 0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
-        {{-0.5f, 0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
-        {{-0.5f, -0.5f, 0.5f}, {}, {}, {}, {}, {}, {}},
-        {{0.5f, -0.5f, 0.5f}, {}, {}, {}, {}, {}, {}},
-        {{0.5f, 0.5f, 0.5f}, {}, {}, {}, {}, {}, {}},
-        {{-0.5f, 0.5f, 0.5f}, {}, {}, {}, {}, {}, {}}
+        {{-0.5f, -0.5f, 0.0f}, {}, {}, {}, {}, {}, {}},
+        {{0.5f, -0.5f, 0.0f}, {}, {}, {}, {}, {}, {}},
+        {{0.5f, 0.5f, 0.0f}, {}, {}, {}, {}, {}, {}},
+        {{-0.5f, 0.5f, 0.0f}, {}, {}, {}, {}, {}, {}}
     };
 
-    // 立方体のインデックスデータ
+    // 平面のインデックスデータ
     std::vector<uint32_t> indices = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        0, 1, 5, 5, 4, 0,
-        2, 3, 7, 7, 6, 2,
-        0, 3, 7, 7, 4, 0,
-        1, 2, 6, 6, 5, 1
+        0, 2, 1, 3, 2, 0
     };
 
-    // 立方体のプリミティブ
-    Primitive cubePrimitive = {vertices, indices, 0};
+    // 平面のプリミティブ
+    Primitive planePrimitive = {vertices, indices, 0};
 
-    // 立方体のメッシュ
-    Mesh cubeMesh = {{cubePrimitive}};
+    // 平面のメッシュ
+    Mesh planeMesh = {{planePrimitive}};
 
-    // 立方体のオブジェクト
-    Object cube1;
-    cube1.Instance = false;
-    cube1.mesh = cubeMesh;
-    cube1.model.push_back(glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f, 1.0f, 0.0f)));
-
-    Object cube2;
-    cube2.Instance = false;
-    cube2.mesh = cubeMesh;
-    cube2.model.push_back(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f)));
+    // 平面のオブジェクト
+    Object plane;
+    plane.Instance = false;
+    plane.mesh = planeMesh;
 
     // シーンにオブジェクトを追加
-    scene.push_back(cube1);
-    scene.push_back(cube2);
-    //ここまで
+    scene.push_back(plane);
+
     
     std::cout << "Vulkan Header Version: " << VK_HEADER_VERSION << std::endl;
 
@@ -149,7 +134,7 @@ void Application::initVulkan() {
     image = createImage(WIDTH, HEIGHT, vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
     
     //バッファの作成
-    
+    setBuffer(scene);
 
     // シェーダーモジュールの作成
     vk::UniqueShaderModule vertShaderModule = createShaderModule("../shaders/shader.vert.spv");
@@ -411,32 +396,77 @@ std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory> Application::createBuffer(vk
     return std::make_pair(std::move(buffer), std::move(bufferMemory));
 }
     
-void Application::SetBuffer(std::vector<Object> scene) {
-    uint32_t vertexCount = 0;
-    uint32_t indexCount = 0;
+void Application::setBuffer(std::vector<Object> scene) {
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
+    //インスタンスの無いオブジェクトの頂点数とインデックス数をカウント
     for(auto object : scene) {
         if(!object.Instance) {
             for(auto primitive : object.mesh.primitives) {
-                vertexCount += primitive.vertices.size();
-                indexCount += primitive.indices.size();
+                vertices.insert(vertices.end(), primitive.vertices.begin(), primitive.vertices.end());
+                indices.insert(indices.end(), primitive.indices.begin(), primitive.indices.end());
             }
         }
     }
 
-    std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory> vertexBuffer = createBuffer({}, vertexCount * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible);
+    vertexBuffers.push_back(createBuffer({}, vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible));
+    void* vertexBufMem = device->mapMemory(vertexBuffers.at(0).second.get(), 0, vertices.size() * sizeof(Vertex));
+    std::memcpy(vertexBufMem, vertices.data(), vertices.size() * sizeof(Vertex));
+
+    indexBuffers.push_back(createBuffer({}, indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eHostVisible));
+    void* indexBufMem = device->mapMemory(indexBuffers.at(0).second.get(), 0, indices.size() * sizeof(uint32_t));
+    std::memcpy(indexBufMem, indices.data(), indices.size() * sizeof(uint32_t));
+
+    InstanceAttribute simpleInstance = {
+        glm::mat4(1.0f)
+    };
+    instanceBuffers.push_back(createBuffer({}, sizeof(InstanceAttribute), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible));
+    void* instanceBufMem = device->mapMemory(instanceBuffers.at(0).second.get(), 0, sizeof(InstanceAttribute));
+    std::memcpy(instanceBufMem, &simpleInstance, sizeof(InstanceAttribute));
+
+    indexCounts.push_back(std::make_pair(indices.size(), 1));
+
+    //インスタンスのあるオブジェクト
+    for(auto object : scene) {
+        if(object.Instance) {
+            std::vector<Vertex> meshVertices;
+            std::vector<uint32_t> meshIndices;
+
+            for(auto primitive : object.mesh.primitives) {
+                meshVertices.insert(meshVertices.end(), primitive.vertices.begin(), primitive.vertices.end());
+                meshIndices.insert(meshIndices.end(), primitive.indices.begin(), primitive.indices.end());
+            }
+            //インスタンスのあるオブジェクトの頂点バッファを作成
+            vertexBuffers.push_back(createBuffer({}, meshVertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible));
+            void* meshVertexBufMem = device->mapMemory(vertexBuffers.back().second.get(), 0, meshVertices.size() * sizeof(Vertex));
+            std::memcpy(meshVertexBufMem, meshVertices.data(), meshVertices.size() * sizeof(Vertex));
+            //インスタンスのあるオブジェクトのインデックスバッファを作成
+            indexBuffers.push_back(createBuffer({}, meshIndices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eHostVisible));
+            void* meshIndexBufMem = device->mapMemory(indexBuffers.back().second.get(), 0, meshIndices.size() * sizeof(uint32_t));
+            std::memcpy(meshIndexBufMem, meshIndices.data(), meshIndices.size() * sizeof(uint32_t));
+            //インスタンスのあるオブジェクトのインスタンスバッファを作成
+            instanceBuffers.push_back(createBuffer({}, object.instanceAttributes.size() * sizeof(InstanceAttribute), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible));
+            void* instanceBufMem = device->mapMemory(instanceBuffers.back().second.get(), 0, object.instanceAttributes.size() * sizeof(InstanceAttribute));
+            std::memcpy(instanceBufMem, object.instanceAttributes.data(), object.instanceAttributes.size() * sizeof(InstanceAttribute));
+
+            indexCounts.push_back(std::make_pair(meshIndices.size(), object.instanceAttributes.size()));
+        }
         
+    }
     
 }
 
 void Application::mainLoop() {
-    //while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        drawFrame();
-    //}
+        for(uint32_t i = 0; i < vertexBuffers.size(); i++) {
+            drawFrame(i);
+        }
+    }
 }
 
-void Application::drawFrame() {
+void Application::drawFrame(uint32_t objectIndex) {
     device->resetFences({swapchainImgFence.get()});
     vk::ResultValue acquireResult = device->acquireNextImageKHR(swapchain.get(), UINT64_MAX,{} ,swapchainImgFence.get());
 
@@ -502,7 +532,11 @@ void Application::drawFrame() {
 
     graphicCommandBuffers.at(0)->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.get());
     
-    graphicCommandBuffers.at(0)->draw(3, 1, 0, 0);
+    graphicCommandBuffers.at(0)->bindVertexBuffers(0, {vertexBuffers.at(objectIndex).first.get(), instanceBuffers.at(objectIndex).first.get()}, {0, 0});
+    graphicCommandBuffers.at(0)->bindIndexBuffer(indexBuffers.at(objectIndex).first.get(), 0, vk::IndexType::eUint32);
+
+    graphicCommandBuffers.at(0)->drawIndexed(indexCounts.at(objectIndex).first, 
+                                             indexCounts.at(objectIndex).second, 0, 0, 0);
     graphicCommandBuffers.at(0)->endRendering();
 
     vk::ImageMemoryBarrier imageMemoryBarrier;
@@ -543,9 +577,6 @@ void Application::drawFrame() {
     presentInfo.swapchainCount = presentSwapchains.size();
     presentInfo.pSwapchains = presentSwapchains.begin();
     presentInfo.pImageIndices = imgIndices.begin();
-
-     std::cout << "[Debug] imageView layout: "
-              << layoutToString(colorAttachments[imageIndex].imageLayout) << std::endl;
 
     graphicsQueues.at(0).presentKHR(presentInfo);
 

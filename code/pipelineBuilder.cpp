@@ -29,7 +29,7 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
     std::vector<vk::VertexInputBindingDescription> bindingDescriptions = {bindingDescription, instanceBindingDescription};
     attributeDescriptions.insert(attributeDescriptions.end(), instanceAttributeDescriptions.begin(), instanceAttributeDescriptions.end());
     
-    /*
+    
     vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
         {},//flags
         bindingDescriptions.size(),//vertexBindingDescriptionCount
@@ -37,7 +37,7 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
         attributeDescriptions.size(),//vertexAttributeDescriptionCount
         attributeDescriptions.data()//pVertexAttributeDescriptions
     );
-    */
+    /*
     vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
         {}, // flags
         0,  // vertexBindingDescriptionCount
@@ -45,7 +45,7 @@ vk::UniquePipeline PipelineBuilder::buildPipeline(vk::Device device, std::vector
         0,  // vertexAttributeDescriptionCount
         nullptr // pVertexAttributeDescriptions
     );
-
+    */
     //InputAssemblyStateの設定
     inputAssembly = vk::PipelineInputAssemblyStateCreateInfo(
         {},//flags
