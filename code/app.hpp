@@ -29,6 +29,10 @@ class Application {
         std::vector<vk::UniqueCommandBuffer> graphicCommandBuffers;
         // vk::UniqueCommandPool computeCommandPool;
         // std::vector<vk::UniqueCommandBuffer> computeCommandBuffers;
+        
+        std::vector<std::psir<vk::UniqueBuffer, vk::UniqueDeviceMemory>> vertexBuffers;
+        std::vector<std::psir<vk::UniqueBuffer, vk::UniqueDeviceMemory>> indexBuffers;
+        std::vector<std::psir<vk::UniqueBuffer, vk::UniqueDeviceMemory>> instanceBuffers;
 
         vk::UniquePipeline pipeline;
         std::unique_ptr<PipelineBuilder> pipelineBuilder;
@@ -71,7 +75,8 @@ class Application {
         void createSwapchain();
 
         //頂点バッファの作成
-        vk::UniqueBuffer createBuffer(std::vector<Object> scene);
+        std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory> createBuffer(vk::BufferCreateFlags flags, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
+        void setBuffer(std::vector<Object> scene);
 
         //レンダリング
         void drawFrame();

@@ -10,6 +10,51 @@ void Application::initWindow() {
 }
 
 void Application::initVulkan() {
+
+    //仮のシーン
+    // 立方体の頂点データ
+    std::vector<Vertex> vertices = {
+        {{-0.5f, -0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
+        {{0.5f, -0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
+        {{0.5f, 0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
+        {{-0.5f, 0.5f, -0.5f}, {}, {}, {}, {}, {}, {}},
+        {{-0.5f, -0.5f, 0.5f}, {}, {}, {}, {}, {}, {}},
+        {{0.5f, -0.5f, 0.5f}, {}, {}, {}, {}, {}, {}},
+        {{0.5f, 0.5f, 0.5f}, {}, {}, {}, {}, {}, {}},
+        {{-0.5f, 0.5f, 0.5f}, {}, {}, {}, {}, {}, {}}
+    };
+
+    // 立方体のインデックスデータ
+    std::vector<uint32_t> indices = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        0, 1, 5, 5, 4, 0,
+        2, 3, 7, 7, 6, 2,
+        0, 3, 7, 7, 4, 0,
+        1, 2, 6, 6, 5, 1
+    };
+
+    // 立方体のプリミティブ
+    Primitive cubePrimitive = {vertices, indices, 0};
+
+    // 立方体のメッシュ
+    Mesh cubeMesh = {{cubePrimitive}};
+
+    // 立方体のオブジェクト
+    Object cube1;
+    cube1.Instance = false;
+    cube1.mesh = cubeMesh;
+    cube1.model.push_back(glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f, 1.0f, 0.0f)));
+
+    Object cube2;
+    cube2.Instance = false;
+    cube2.mesh = cubeMesh;
+    cube2.model.push_back(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(1.0f, 1.0f, 0.0f)));
+
+    // シーンにオブジェクトを追加
+    scene.push_back(cube1);
+    scene.push_back(cube2);
+    //ここまで
     
     std::cout << "Vulkan Header Version: " << VK_HEADER_VERSION << std::endl;
 
@@ -103,6 +148,9 @@ void Application::initVulkan() {
     // イメージの作成
     image = createImage(WIDTH, HEIGHT, vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
     
+    //バッファの作成
+    
+
     // シェーダーモジュールの作成
     vk::UniqueShaderModule vertShaderModule = createShaderModule("../shaders/shader.vert.spv");
     vk::UniqueShaderModule fragShaderModule = createShaderModule("../shaders/shader.frag.spv");
@@ -337,8 +385,33 @@ void Application::createSwapchain() {
     }
 
 }
+
+std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory> Application::createBuffer(vk::BufferCreateFlags flags, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
+    vk::BufferCreateInfo bufferCreateInfo(
+        flags,
+        size,
+        usage,
+        vk::SharingMode::eExclusive,
+        0,
+        nullptr
+    );
+
+    vk::UniqueBuffer buffer = device -> createBufferUnique(bufferCreateInfo);
+
+    vk::MemoryRequirements memRequirements = device->getBufferMemoryRequirements(buffer.get());
+
+    vk::MemoryAllocateInfo allocInfo;
+    allocInfo.allocationSize = memRequirements.size;
+
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    vk::UniqueDeviceMemory bufferMemory = device->allocateMemoryUnique(allocInfo);
+    device -> bindBufferMemory(buffer.get(), bufferMemory.get(), 0);    
+
+    return std::make_pair(std::move(buffer), std::move(bufferMemory));
+}
     
-vk::UniqueBuffer Application::createBuffer(std::vector<Object> scene) {
+void Application::SetBuffer(std::vector<Object> scene) {
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
 
@@ -351,14 +424,7 @@ vk::UniqueBuffer Application::createBuffer(std::vector<Object> scene) {
         }
     }
 
-    vk::BufferCreateInfo bufferCreateInfo(
-        {},
-        vertexCount * sizeof(Vertex),
-        vk::BufferUsageFlagBits::eVertexBuffer,
-        vk::SharingMode::eExclusive,
-        0,
-        nullptr
-    );
+    std::pair<vk::UniqueBuffer, vk::UniqueDeviceMemory> vertexBuffer = createBuffer({}, vertexCount * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible);
         
     
 }
@@ -368,23 +434,6 @@ void Application::mainLoop() {
         glfwPollEvents();
         drawFrame();
     //}
-}
-
-
-std::string layoutToString(vk::ImageLayout layout) {
-    switch(layout) {
-        case vk::ImageLayout::eUndefined: return "VK_IMAGE_LAYOUT_UNDEFINED";
-        case vk::ImageLayout::eGeneral: return "VK_IMAGE_LAYOUT_GENERAL";
-        case vk::ImageLayout::eColorAttachmentOptimal: return "VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL";
-        case vk::ImageLayout::eDepthStencilAttachmentOptimal: return "VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL";
-        case vk::ImageLayout::eDepthStencilReadOnlyOptimal: return "VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL";
-        case vk::ImageLayout::eShaderReadOnlyOptimal: return "VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL";
-        case vk::ImageLayout::eTransferSrcOptimal: return "VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL";
-        case vk::ImageLayout::eTransferDstOptimal: return "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL";
-        case vk::ImageLayout::ePreinitialized: return "VK_IMAGE_LAYOUT_PREINITIALIZED";
-        case vk::ImageLayout::ePresentSrcKHR: return "VK_IMAGE_LAYOUT_PRESENT_SRC_KHR";
-        default: return "Unknown Layout";
-    }
 }
 
 void Application::drawFrame() {
