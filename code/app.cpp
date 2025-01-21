@@ -36,9 +36,15 @@ void Application::initVulkan() {
     Object plane;
     plane.Instance = false;
     plane.mesh = planeMesh;
+    Object planeInstance;
+    planeInstance.Instance = true;
+    planeInstance.mesh = planeMesh;
+    planeInstance.instanceAttributes.push_back({glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.0f, 0.0f))});
+    planeInstance.instanceAttributes.push_back({glm::translate(glm::mat4(1.0f), glm::vec3(-0.3f, 0.4f, 0.0f))});
 
     // シーンにオブジェクトを追加
     scene.push_back(plane);
+    scene.push_back(planeInstance);
 
     
     std::cout << "Vulkan Header Version: " << VK_HEADER_VERSION << std::endl;
